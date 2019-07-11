@@ -42,11 +42,9 @@ function matrix wooldridge_test_serial (series y "Dependent variable",
     return mat
 end function
 
-
 function void gui_wooldridge_test_serial (void)
     /* Wrapper function for gui menu-entry*/
     string yname = $model.depvar
     genseries("@yname", $model.ylist[1])
     matrix mat = wooldridge_test_serial(@yname, $model.xlist)
 end function
-

@@ -16,15 +16,31 @@ y	- series for the dependent variable
 X	- list of regressors
 verbose - integer (optional) for printing test output: 0=NO, 1=YES (default)
 
-The test is discussed in: Wooldridge, J.M. 2002. Econometric Analysis of Cross Section and Panel Data. Cambridge, MA: MIT Press, pp.282-283.
+The test is discussed in: Wooldridge, J.M. 2002. Econometric Analysis of Cross Section and Panel Data. Cambridge,
+MA: MIT Press, pp.282-283.
 
-Please note that the degrees of freedom for the F-test in the corresponding function in Stata (xtserial, see Drukker, D.M. 2003. Testing for serial correlation in linear panel-data models, Stata Journal 3(2), 168-177) are lower and equal to the number of cross-sectional units minus one, for the command uses the option "cluster" in the regression.
-Please also note that the results obtained with the sample db provided with xtserial in Stata are different from the results obtained in gretl with the same db by using this function simply because the db has got the variable time with breaks. Ex.: year 75, 77, 80, 81...
-While Stata looks at the content of the variable and does not treat as successive two time periods when they are not contiguous years, gretl does not look at the value of the variable set for the time. Therefore the two programs return different series for teh first-differenced variables.
+Please note that the degrees of freedom for the F-test in the corresponding function in Stata (xtserial, see Drukker,
+D.M. 2003. Testing for serial correlation in linear panel-data models, Stata Journal 3(2), 168-177) are lower and equal
+to the number of cross-sectional units minus one, for the command uses the option "cluster" in the regression.
+Please also note that the results obtained with the sample db provided with xtserial in Stata are different from the
+results obtained in gretl with the same db by using this function simply because the db has got the variable time with
+breaks. Ex.: year 75, 77, 80, 81...
+While Stata looks at the content of the variable and does not treat as successive two time periods when they are not contiguous
+years, gretl does not look at the value of the variable set for the time. Therefore the two programs return different series
+for the first-differenced variables.
 
-NOTE: the return type from version 1 (scalar) to version 2 (matrix) has been
-changed. To adapt the code written for version 1, add [2] at the end of the line.
 
+Changelog:
+v2.1
+- Add GUI access in the model menu
+- Minor adaptions
+
+V2.0
+- Return value is now a matrix instead of a scalar
 
 For any suggestion, bug, etc. write to:
-giuseppe.vittucci@unimib.it or artur.tarassow@gmail.com
+giuseppe.vittucci@unimib.it or atecon@posteo.de
+
+
+License:
+GNU General Public License v3.0
