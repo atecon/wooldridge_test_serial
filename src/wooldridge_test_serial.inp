@@ -7,7 +7,8 @@ function matrix wooldridge_test_serial (series y "Dependent variable",
                                         list X "List of regressors",
                                         int verbose[0:1:1] "Print details: 0=NO, 1=YES")
     # Wooldridge test for autocorrelation in panel data
-    # Wooldridge (2002) Econometric Analysis of Cross Section and Panel Data, pp.282-283;
+    # Wooldridge (2002) Econometric Analysis of Cross Section and
+    # Panel Data, pp.282-283;
     # Giuseppe Vittucci (2011) and Artur Tarassow (2016).
     diff y X
     list dX = null
@@ -38,6 +39,14 @@ function matrix wooldridge_test_serial (series y "Dependent variable",
     endif
     mat = $coeff ~ m ~ p
     cnameset(mat, "ARcoeff Teststat. P-value")
-
     return mat
 end function
+
+
+function void gui_wooldridge_test_serial (void)
+    /* Wrapper function for gui menu-entry*/
+    string yname = $model.depvar
+    genseries("@yname", $model.ylist[1])
+    matrix mat = wooldridge_test_serial(@yname, $model.xlist)
+end function
+
