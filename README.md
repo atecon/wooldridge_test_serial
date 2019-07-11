@@ -1,2 +1,2 @@
-# wooldridge_test_serial-
+# wooldridge_test_serial
 Wooldridge test for serial correlation of residuals in panel
