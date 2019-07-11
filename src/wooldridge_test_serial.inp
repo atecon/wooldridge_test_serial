@@ -1,10 +1,10 @@
 # author='Giuseppe Vittucci and Artur Tarassow'
 # email='giuseppe.vittucci@unimib.it'
-# version='2.0'
-# date='2016-10-28'
+# version='2.1'
+# date='2019-07-11'
 
-function matrix wooldridge_test_serial (series y "dependent variable",
-                                        list X "regressors",
+function matrix wooldridge_test_serial (series y "Dependent variable",
+                                        list X "List of regressors",
                                         int verbose[0:1:1] "Print details: 0=NO, 1=YES")
     # Wooldridge test for autocorrelation in panel data
     # Wooldridge (2002) Econometric Analysis of Cross Section and Panel Data, pp.282-283;
@@ -17,10 +17,10 @@ function matrix wooldridge_test_serial (series y "dependent variable",
     ols d_y dX --robust --quiet
     matrix coef_stde = $coeff ~ $stderr
     string parnames = varname(dX)
-    if verbose==1
-        printf "\nFirst-Differenced equation (dependent d_y):\n"
+    if verbose
+        printf "\nFirst-Differenced equation (dependent d_%s):\n", argname(y)
         modprint coef_stde parnames
-        printf "\nRegression of residuals of the FD equation on lagged residuals\n"
+        printf "\nRegression of residuals of the first-difference equation on lagged residuals:\n"
         printf "uhat = rho*uhat(-1) + e\n"
     endif
     series u = $uhat
@@ -28,14 +28,16 @@ function matrix wooldridge_test_serial (series y "dependent variable",
     matrix coef_stde = $coeff ~ $stderr
     scalar m = ($coeff[1,1]+0.5)^2/$vcv[1,1]
     scalar p = pvalue(F, 1, $df, m)
-    if verbose==1
+    if verbose
         string parnames = "uhat(-1)"
         modprint coef_stde parnames
-        printf "\nWooldridge test for autocorrelation in panel data\nH0: no first-order autocorrelation (rho = -0.5)\n"
+        printf "\nWooldridge test for autocorrelation in panel data.\n"
+        printf "H0: no first-order autocorrelation (rho = -0.5):\n"
         printf "F(1,%g) = %g\n", $df, m
         printf "Prob > F = %g", p
     endif
     mat = $coeff ~ m ~ p
-    colnames(mat,"ARcoeff Teststat. Pvalue")
+    cnameset(mat, "ARcoeff Teststat. P-value")
+
     return mat
 end function

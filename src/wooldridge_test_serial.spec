@@ -1,11 +1,14 @@
 author = Giuseppe Vittucci and Artur Tarassow
 email = giuseppe.vittucci@unimib.it
-version = 2.0
-date = 2016-10-28
+version = 2.1
+date = 2019-07-11
 description = Wooldridge test for serial correlation of residuals in panel
-tags = C23
+tags = C23 C52
 min-version = 1.9.4
 data-requirement = needs-panel-data
+label = Autocorrelation-Wooldridge
+menu-attachment = MODELWIN/Tests
+model-requirement = panel
 public = wooldridge_test_serial 
 help = wooldridge_test_serial_help.txt
 sample-script = wooldridge_test_serial_sample.inp

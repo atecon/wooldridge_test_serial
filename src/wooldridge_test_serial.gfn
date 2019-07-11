@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gretl-functions>
+<gretl-function-package name="wooldridge_test_serial" needs-panel-data="true" model-requirement="panel" minver="1.9.4">
+<author email="giuseppe.vittucci@unimib.it">Giuseppe Vittucci and Artur Tarassow</author>
+<version>2.1</version>
+<date>2019-07-11</date>
+<description>Wooldridge test for serial correlation of residuals in panel</description>
+<tags>C23 C52</tags>
+<label>Autocorrelation-Wooldridge</label>
+<menu-attachment>MODELWIN/Tests</menu-attachment>
+<help>
+This package computes the Wooldridge test for serial correlation of residuals in panel.
+The null hypothesis is: no serial correlation.
+
+The function prints:
+- the results of the auxiliary regression for the model in first-differences;
+- the results of the regression of the estimated residuals in the previous regression against their lag;
+- the F-test (with the related p-value) for the null that the coefficient attached to the lagged residuals is equal to -0.5.
+
+The function returns a matrix with:
+- the point estimate of the AR coefficient;
+- the test statistic;
+- the p-value.
+
+The parameters of the function are:
+y	- series for the dependent variable
+X	- list of regressors
+verbose - integer (optional) for printing test output: 0=NO, 1=YES (default)
+
+The test is discussed in: Wooldridge, J.M. 2002. Econometric Analysis of Cross Section and Panel Data. Cambridge, MA: MIT Press, pp.282-283.
+
+Please note that the degrees of freedom for the F-test in the corresponding function in Stata (xtserial, see Drukker, D.M. 2003. Testing for serial correlation in linear panel-data models, Stata Journal 3(2), 168-177) are lower and equal to the number of cross-sectional units minus one, for the command uses the option &quot;cluster&quot; in the regression.
+Please also note that the results obtained with the sample db provided with xtserial in Stata are different from the results obtained in gretl with the same db by using this function simply because the db has got the variable time with breaks. Ex.: year 75, 77, 80, 81...
+While Stata looks at the content of the variable and does not treat as successive two time periods when they are not contiguous years, gretl does not look at the value of the variable set for the time. Therefore the two programs return different series for teh first-differenced variables.
+
+NOTE: the return type from version 1 (scalar) to version 2 (matrix) has been
+changed. To adapt the code written for version 1, add [2] at the end of the line.
+
+
+For any suggestion, bug, etc. write to:
+giuseppe.vittucci@unimib.it or artur.tarassow@gmail.com
+</help>
+<gretl-function name="wooldridge_test_serial" type="matrix">
+ <params count="3">
+  <param name="y" type="series">
+<description>Dependent variable</description>
+  </param>
+  <param name="X" type="list">
+<description>List of regressors</description>
+  </param>
+  <param name="verbose" type="int" min="0" max="1" default="1">
+<description>Print details: 0=NO, 1=YES</description>
+  </param>
+ </params>
+<code># Wooldridge test for autocorrelation in panel data
+# Wooldridge (2002) Econometric Analysis of Cross Section and Panel Data, pp.282-283;
+# Giuseppe Vittucci (2011) and Artur Tarassow (2016).
+diff y X
+list dX = null
+loop foreach i X --quiet
+  list dX += d_$i
+endloop
+ols d_y dX --robust --quiet
+matrix coef_stde = $coeff ~ $stderr
+string parnames = varname(dX)
+if verbose
+  printf &quot;\nFirst-Differenced equation (dependent d_%s):\n&quot;, argname(y)
+  modprint coef_stde parnames
+  printf &quot;\nRegression of residuals of the first-difference equation on lagged residuals:\n&quot;
+  printf &quot;uhat = rho*uhat(-1) + e\n&quot;
+endif
+series u = $uhat
+ols u u(-1) --robust --quiet
+matrix coef_stde = $coeff ~ $stderr
+scalar m = ($coeff[1,1]+0.5)^2/$vcv[1,1]
+scalar p = pvalue(F, 1, $df, m)
+if verbose
+  string parnames = &quot;uhat(-1)&quot;
+  modprint coef_stde parnames
+  printf &quot;\nWooldridge test for autocorrelation in panel data.\n&quot;
+  printf &quot;H0: no first-order autocorrelation (rho = -0.5):\n&quot;
+  printf &quot;F(1,%g) = %g\n&quot;, $df, m
+  printf &quot;Prob &gt; F = %g&quot;, p
+endif
+mat = $coeff ~ m ~ p
+cnameset(mat, &quot;ARcoeff Teststat. P-value&quot;)
+return mat
+</code>
+</gretl-function>
+<sample-script>
+include wooldridge_test_serial.gfn
+open abdata.gdt
+list X = n k
+matrix M = wooldridge_test_serial(ys,X)
+print M
+</sample-script>
+</gretl-function-package>
+</gretl-functions>
