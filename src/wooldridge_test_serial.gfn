@@ -4,7 +4,7 @@
 <author email="giuseppe.vittucci@unimib.it">Giuseppe Vittucci and Artur Tarassow</author>
 <version>2.1</version>
 <date>2019-07-11</date>
-<description>Wooldridge test for serial correlation of residuals in panel</description>
+<description>Wooldridge's test for serial correlation of residuals in panel model</description>
 <tags>C23 C52</tags>
 <label>Autocorrelation-Wooldridge</label>
 <menu-attachment>MODELWIN/Tests</menu-attachment>
@@ -104,7 +104,7 @@ cnameset(mat, &quot;ARcoeff Teststat. P-value&quot;)
 return mat
 </code>
 </gretl-function>
-<gretl-function name="gui_wooldridge_test_serial" type="void">
+<gretl-function name="gui_wooldridge_test_serial" type="void" pkg-role="gui-main">
 <code>/* Wrapper function for gui menu-entry*/
 string yname = $model.depvar
 genseries(&quot;@yname&quot;, $model.ylist[1])
