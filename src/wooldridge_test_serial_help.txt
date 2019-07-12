@@ -1,10 +1,14 @@
-This package computes the Wooldridge test for serial correlation of residuals in panel.
+This package computes the Wooldridge test for serial correlation of residuals
+in panel.
+
 The null hypothesis is: no serial correlation.
 
 The function prints:
 - the results of the auxiliary regression for the model in first-differences;
-- the results of the regression of the estimated residuals in the previous regression against their lag;
-- the F-test (with the related p-value) for the null that the coefficient attached to the lagged residuals is equal to -0.5.
+- the results of the regression of the estimated residuals in the previous
+regression against their lag;
+- the F-test (with the related p-value) for the null that the coefficient
+attached to the lagged residuals is equal to -0.5.
 
 The function returns a matrix with:
 - the point estimate of the AR coefficient;
@@ -16,18 +20,22 @@ y	- series for the dependent variable
 X	- list of regressors
 verbose - integer (optional) for printing test output: 0=NO, 1=YES (default)
 
-The test is discussed in: Wooldridge, J.M. 2002. Econometric Analysis of Cross Section and Panel Data. Cambridge,
-MA: MIT Press, pp.282-283.
+The test is discussed in: Wooldridge, J.M. 2002. Econometric Analysis of Cross
+Section and Panel Data. Cambridge, MA: MIT Press, pp.282-283.
 
-Please note that the degrees of freedom for the F-test in the corresponding function in Stata (xtserial, see Drukker,
-D.M. 2003. Testing for serial correlation in linear panel-data models, Stata Journal 3(2), 168-177) are lower and equal
-to the number of cross-sectional units minus one, for the command uses the option "cluster" in the regression.
-Please also note that the results obtained with the sample db provided with xtserial in Stata are different from the
-results obtained in gretl with the same db by using this function simply because the db has got the variable time with
-breaks. Ex.: year 75, 77, 80, 81...
-While Stata looks at the content of the variable and does not treat as successive two time periods when they are not contiguous
-years, gretl does not look at the value of the variable set for the time. Therefore the two programs return different series
-for the first-differenced variables.
+Please note that the degrees of freedom for the F-test in the corresponding
+function in Stata (xtserial, see Drukker, D.M. 2003. Testing for serial
+correlation in linear panel-data models, Stata Journal 3(2), 168-177) are
+lower and equal to the number of cross-sectional units minus one, for the
+command uses the option "cluster" in the regression. Please also note that the
+results obtained with the sample db provided with xtserial in Stata are
+different from the results obtained in gretl with the same db by using this
+function simply because the db has got the variable time with breaks.
+Ex.: year 75, 77, 80, 81...
+While Stata looks at the content of the variable and does not treat as
+successive two time periods when they are not contiguous years, gretl does not
+look at the value of the variable set for the time. Therefore the two programs
+return different series for the first-differenced variables.
 
 
 Changelog:
