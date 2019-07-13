@@ -85,6 +85,11 @@ list dX = null
 loop foreach i X --quiet
   list dX += d_$i
 endloop
+scalar ret = series_is_null(d_y)
+if ret
+  string vname = argname(y)
+  funcerr &quot;Error: The first difference of series @vname comprises only zero entries.&quot;
+endif
 ols d_y dX --robust --quiet
 matrix coef_stde = $coeff ~ $stderr
 string parnames = varname(dX)
@@ -117,6 +122,24 @@ return mat
 string yname = $model.depvar
 genseries(&quot;@yname&quot;, $model.ylist[1])
 matrix mat = wooldridge_test_serial(@yname, $model.xlist)
+</code>
+</gretl-function>
+<gretl-function name="sum_abs_series_values" type="scalar" private="1">
+ <params count="1">
+  <param name="s" type="series" const="true"/>
+ </params>
+<code>return sum(abs(s))
+</code>
+</gretl-function>
+<gretl-function name="series_is_null" type="scalar" private="1">
+ <params count="1">
+  <param name="s" type="series" const="true"/>
+ </params>
+<code>scalar ret = sum_abs_series_values(s)
+if ret==0
+  return 1
+endif
+return 0
 </code>
 </gretl-function>
 <sample-script>

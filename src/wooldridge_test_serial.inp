@@ -15,6 +15,14 @@ function matrix wooldridge_test_serial (series y "Dependent variable",
     loop foreach i X --quiet
         list dX += d_$i
     endloop
+
+    scalar ret = series_is_null(d_y)
+
+    if ret
+        string vname = argname(y)
+        funcerr "Error: The first difference of series @vname comprises only zero entries."
+    endif
+
     ols d_y dX --robust --quiet
     matrix coef_stde = $coeff ~ $stderr
     string parnames = varname(dX)
@@ -41,6 +49,21 @@ function matrix wooldridge_test_serial (series y "Dependent variable",
     cnameset(mat, "ARcoeff Teststat. P-value")
     return mat
 end function
+
+
+function scalar sum_abs_series_values (const series s)
+    return sum(abs(s))
+end function
+
+
+function scalar series_is_null (const series s)
+    scalar ret = sum_abs_series_values(s)
+    if ret==0
+         return 1
+     endif
+     return 0    
+end function
+
 
 function void gui_wooldridge_test_serial (void)
     /* Wrapper function for gui menu-entry*/
