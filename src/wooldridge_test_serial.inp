@@ -10,19 +10,22 @@ function matrix wooldridge_test_serial (series y "Dependent variable",
     # Wooldridge (2002) Econometric Analysis of Cross Section and
     # Panel Data, pp.282-283;
     # Giuseppe Vittucci (2011) and Artur Tarassow (2016).
+    
     diff y X
     list dX = null
+    if inlist(X, "const")
+        list dX += const
+        list X -= const
+    endif    
     loop foreach i X --quiet
         list dX += d_$i
     endloop
-
+    
     scalar ret = series_is_null(d_y)
-
     if ret
         string vname = argname(y)
         funcerr "Error: The first difference of series @vname comprises only zero entries."
     endif
-
     ols d_y dX --robust --quiet
     matrix coef_stde = $coeff ~ $stderr
     string parnames = varname(dX)
@@ -43,7 +46,7 @@ function matrix wooldridge_test_serial (series y "Dependent variable",
         printf "\nWooldridge test for autocorrelation in panel data.\n"
         printf "H0: no first-order autocorrelation (rho = -0.5):\n"
         printf "F(1,%g) = %g\n", $df, m
-        printf "Prob > F = %g", p
+        printf "Prob > F = %g\n", p
     endif
     mat = $coeff ~ m ~ p
     cnameset(mat, "ARcoeff Teststat. P-value")
