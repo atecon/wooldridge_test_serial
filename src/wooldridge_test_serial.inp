@@ -4,7 +4,7 @@
 # date='2019-07-11'
 
 function matrix wooldridge_test_serial (series y "Dependent variable",
-                                        list X "List of regressors",
+                                        list X "List of regressors",                               
                                         int verbose[0:1:1] "Print details: 0=NO, 1=YES")
     # Wooldridge test for autocorrelation in panel data
     # Wooldridge (2002) Econometric Analysis of Cross Section and
@@ -12,11 +12,7 @@ function matrix wooldridge_test_serial (series y "Dependent variable",
     # Giuseppe Vittucci (2011) and Artur Tarassow (2016).
     
     diff y X
-    list dX = null
-    if inlist(X, "const")
-        list dX += const
-        list X -= const
-    endif    
+    list dX = const #null
     loop foreach i X --quiet
         list dX += d_$i
     endloop
@@ -26,29 +22,49 @@ function matrix wooldridge_test_serial (series y "Dependent variable",
         string vname = argname(y)
         funcerr "Error: The first difference of series @vname comprises only zero entries."
     endif
+    
     ols d_y dX --robust --quiet
     matrix coef_stde = $coeff ~ $stderr
-    string parnames = varname(dX)
+    string parnames = varname($xlist)
     if verbose
         printf "\nFirst-Differenced equation (dependent d_%s):\n", argname(y)
         modprint coef_stde parnames
         printf "\nRegression of residuals of the first-difference equation on lagged residuals:\n"
         printf "uhat = rho*uhat(-1) + e\n"
     endif
+    
     series u = $uhat
-    ols u u(-1) --robust --quiet
+    ols u u(-1) --robust #--quiet						# robust-> Arellano estimator used for VCV
+
+/*
+    restrict											# standard t-test
+        b[1] = 0
+    end restrict    
+*/
     matrix coef_stde = $coeff ~ $stderr
-    scalar m = ($coeff[1,1]+0.5)^2/$vcv[1,1]
-    scalar p = pvalue(F, 1, $df, m)
+    scalar tstat = ($coeff+0.5)^2/$vcv[1,1]    
+    scalar df = $df
+    scalar NT = $nobs
+    NT
+    scalar N = rows(values($unit))
+    N
+    scalar T = NT/N
+
+    eval $Fstat
+    tstat
+    stop
+
+    scalar pval = pvalue(F, 1, $df, tstat)
+    stop
     if verbose
         string parnames = "uhat(-1)"
         modprint coef_stde parnames
         printf "\nWooldridge test for autocorrelation in panel data.\n"
         printf "H0: no first-order autocorrelation (rho = -0.5):\n"
-        printf "F(1,%g) = %g\n", $df, m
-        printf "Prob > F = %g\n", p
+        printf "F(1,%g) = %g\n", $df, tstat
+        printf "Prob > F = %g\n", pval
     endif
-    mat = $coeff ~ m ~ p
+    mat = $coeff ~ tstat ~ pval
     cnameset(mat, "ARcoeff Teststat. P-value")
     return mat
 end function

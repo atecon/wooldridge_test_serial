@@ -1,7 +1,9 @@
 #include wooldridge_test_serial.gfn
 open abdata.gdt
-list X = const n k
+list X = n k
 matrix M = wooldridge_test_serial(ys,X)
 
-panel ys X --quiet
+
+panel ys const X --quiet
 modtest --autocorr
+
