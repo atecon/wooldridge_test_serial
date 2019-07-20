@@ -4,83 +4,53 @@
 # date='2019-07-11'
 
 function matrix wooldridge_test_serial (series y "Dependent variable",
-                                        list X "List of regressors",                               
-                                        int verbose[0:1:1] "Print details: 0=NO, 1=YES")
+                                        list X "List of regressors",
+                                        const int robustness_type[0:2:0] "TODO",
+                                        const bool verbose[0:1:1] "Print details: 0=NO, 1=YES")
     # Wooldridge test for autocorrelation in panel data
     # Wooldridge (2002) Econometric Analysis of Cross Section and
     # Panel Data, pp.282-283;
-    # Giuseppe Vittucci (2011) and Artur Tarassow (2016).
-    
-    diff y X
-    list dX = const #null
-    loop foreach i X --quiet
-        list dX += d_$i
-    endloop
-    
-    scalar ret = series_is_null(d_y)
-    if ret
-        string vname = argname(y)
-        funcerr "Error: The first difference of series @vname comprises only zero entries."
-    endif
-    
-    ols d_y dX --robust --quiet
-    matrix coef_stde = $coeff ~ $stderr
-    string parnames = varname($xlist)
-    if verbose
-        printf "\nFirst-Differenced equation (dependent d_%s):\n", argname(y)
-        modprint coef_stde parnames
-        printf "\nRegression of residuals of the first-difference equation on lagged residuals:\n"
-        printf "uhat = rho*uhat(-1) + e\n"
-    endif
-    
-    series u = $uhat
-    ols u u(-1) --robust #--quiet						# robust-> Arellano estimator used for VCV
+    # Giuseppe Vittucci and Artur Tarassow.
 
-/*
-    restrict											# standard t-test
-        b[1] = 0
-    end restrict    
-*/
-    matrix coef_stde = $coeff ~ $stderr
-    scalar tstat = ($coeff+0.5)^2/$vcv[1,1]    
-    scalar df = $df
-    scalar NT = $nobs
-    NT
-    scalar N = rows(values($unit))
-    N
-    scalar T = NT/N
 
-    eval $Fstat
-    tstat
+    # Build series
+    series d_y = diff(y)
+    series_is_null(d_y)
+    list dX = get_list_of_differenced_series(X)
+
+    # 1st diff. regression
+    bundle b = null
+    b = run_wooldridge_ols(d_y, dX, robustness_type, verbose)
+    series u = b.uhat
+    print_first_diff_reg(argname(y), b.xlist_names, b.coeff~b.stderr, robustness_type, verbose)
+
+    
+    # Run actual auxiliary regression
+    print_aux_reg(verbose)
+    bundle b = null
+    list u_lag = u(-1)
+    b = run_wooldridge_ols(u, u_lag, robustness_type, verbose)
+    
+    # Inference
+    matrix results = run_wooldridge_t_test(b.coeff, b.stderr, b.df)
+    tstat = results[1]
+    pval = results[2]
+    print_wooldridge_test_results(b.df, tstat, pval, b.coeff, b.stderr, robustness_type, verbose)
+    
+    # t-test by hand		# TODO: DROP    
+    /*    
+    string str_robustness = b.str_robustness
+    ols u u(-1) @str_robustness #--quiet
+    restrict
+        b[1] = -0.5
+    end restrict
     stop
+    */
 
-    scalar pval = pvalue(F, 1, $df, tstat)
-    stop
-    if verbose
-        string parnames = "uhat(-1)"
-        modprint coef_stde parnames
-        printf "\nWooldridge test for autocorrelation in panel data.\n"
-        printf "H0: no first-order autocorrelation (rho = -0.5):\n"
-        printf "F(1,%g) = %g\n", $df, tstat
-        printf "Prob > F = %g\n", pval
-    endif
-    mat = $coeff ~ tstat ~ pval
+    mat = b.coeff~tstat~pval
     cnameset(mat, "ARcoeff Teststat. P-value")
+
     return mat
-end function
-
-
-function scalar sum_abs_series_values (const series s)
-    return sum(abs(s))
-end function
-
-
-function scalar series_is_null (const series s)
-    scalar ret = sum_abs_series_values(s)
-    if ret==0
-         return 1
-     endif
-     return 0    
 end function
 
 
@@ -88,5 +58,135 @@ function void gui_wooldridge_test_serial (void)
     /* Wrapper function for gui menu-entry*/
     string yname = $model.depvar
     genseries("@yname", $model.ylist[1])
-    matrix mat = wooldridge_test_serial(@yname, $model.xlist)
+    matrix mat = wooldridge_test_serial(@yname, $model.xlist)		# TODO: Add robustness_type option
+end function
+
+
+function bundle run_wooldridge_ols (const series y, const list L, const int robustness_type,
+                                    const bool verbose)
+    /* Estimate regression by OLS and retrieve various model information */
+
+    bundle b = null    
+    string str_quiet = get_quiet_string(verbose)
+    string str_robustness = get_robustness_string(robustness_type)
+    
+    # Set type of VCV correction
+    if robustness_type==1				# HAC type Arellano estimator
+        set pcse off					# TODO: Does this overwrite user-settings??
+    elif robustness_type==2				# Beck & Katz Panel Corrected Standard Errors (do not take autocorrelation into account)
+        set pcse on						# TODO: Does this overwrite user-settings??
+    endif
+
+    ols y L @str_robustness @str_quiet
+    
+    string b.xlist_names = varname($xlist)
+    series b.uhat = $uhat
+    matrix b.coeff = $coeff
+    matrix b.stderr = $stderr
+    scalar b.ncoeff = nelem($xlist)
+    scalar b.T = $T
+    matrix b.vcv = $vcv
+    scalar b.df = $df
+    string b.str_robustness = str_robustness
+
+    return b
+end function
+
+function matrix run_wooldridge_t_test (const scalar coeff, const scalar stderr, const int df)
+    /* Run 2-sided t-test on H0: b=-0.5 */
+
+    matrix results = zeros(2,1)
+    results[1] = (coeff + 0.5) / stderr
+    results[2] = pvalue(t, df, results[1])
+
+    rnameset(results, "tstat pvalue")
+    return results
+end function
+
+
+function list get_list_of_differenced_series (const list L)
+    /* Helper function for differencing series */
+    #list dL = const					# TODO: think about...
+    list dL = null
+    loop foreach i L --quiet
+        series d_$i = diff(L.$i)
+        list dL += d_$i
+    endloop
+    return dL
+end function
+
+
+function string get_stderr_type_string (const int robustness_type)
+    if robustness_type==0
+        return "With asymptotic standard errors."
+    elif robustness_type==1
+        return "With HAC robust Arellano standard errors."
+    elif robustness_type==2
+        return "With Beck & Katz panel corrected standard errors."
+    endif
+end function
+
+
+function void print_wooldridge_test_results (const int df, const scalar tstat, const scalar pval,
+                                             const matrix coeff, const matrix stderr,
+                                             const int robustness_type, const bool verbose)
+    /* Helper function for printing test results */
+    if verbose
+        matrix mat = coeff ~ stderr
+        string parnames = "uhat(-1)"
+        modprint mat parnames
+        printf "\nWooldridge test for autocorrelation in panel data.\n"
+        printf "H0: no first-order autocorrelation (rho = -0.5):\n"
+        printf "%s\n", get_stderr_type_string(robustness_type)
+        printf "F(1,%d) = %g\n", df, tstat
+        printf "Prob > F = %g\n", pval
+    endif
+end function
+
+
+function scalar sum_abs_series_values (const series y)
+    return sum(abs(y))
+end function
+
+function void series_is_null (const series y)
+    scalar ret = sum_abs_series_values(y)
+    if ret==0
+        errmsg_series_is_null(s)
+    endif
+end function
+
+function void errmsg_series_is_null (const series y)
+    string vname = argname(y)
+    funcerr "Error: The first difference of series @vname comprises only zero entries."
+end function
+
+
+function string get_quiet_string (const bool verbose)
+    string str_quiet = ""
+    return (verbose==1) ? "--quiet" : str_quiet
+end function
+
+
+function string get_robustness_string (const bool robustness_type)
+    string str_robustness = ""
+    return (robustness_type>0) ? "--robust" : str_robustness
+end function
+
+
+function void print_first_diff_reg (const string name_y, const string parnames, const matrix coef_stde,
+                                    const int robustness_type, const bool verbose)
+    /* Helper function for printing results of initial 1st difference regression */
+    if verbose
+        printf "\nFirst-Differenced equation (dependent d_%s):\n", name_y
+        printf "%s\n", get_stderr_type_string(robustness_type)
+        modprint coef_stde parnames
+    endif
+end function
+
+
+function void print_aux_reg (const bool verbose)
+    if verbose
+        printf "\nRegression of residuals of the first-difference equation on lagged residuals:\n"
+        printf "uhat = rho*uhat(-1) + e\n"
+    endif
 end function
