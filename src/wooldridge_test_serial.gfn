@@ -3,22 +3,26 @@
 <gretl-function-package name="wooldridge_test_serial" needs-panel-data="true" model-requirement="panel" minver="2016d">
 <author email="giuseppe.vittucci@unimib.it">Giuseppe Vittucci and Artur Tarassow</author>
 <version>2.1</version>
-<date>2019-07-11</date>
+<date>2019-07-23</date>
 <description>Wooldridge's test for serial correlation of residuals in panel model</description>
 <tags>C23 C52</tags>
 <label>Autocorrelation-Wooldridge</label>
 <menu-attachment>MODELWIN/Tests</menu-attachment>
 <help>
-This package computes the Wooldridge test for serial correlation of residuals
-in panel.
+This package computes Wooldridge's test for 1st-order serial correlation
+of residuals in panels.
 
-The null hypothesis is: no serial correlation.
+The null hypothesis is: no serial correlation of order one.
+
+Since gretl version 2019d, this type of test is shipped natively with gretl.
+However, the gretl version only supports HAC robust Arellano type of
+standard errors.
 
 The function prints:
-- the results of the auxiliary regression for the model in first-differences;
-- the results of the regression of the estimated residuals in the previous
-regression against their lag;
-- the F-test (with the related p-value) for the null that the coefficient
+1) The results of the auxiliary regression for the model in first-differences;
+2) The results of the regression of the estimated residuals in the previous
+regression against its 1st lag;
+3) The t-test (with the related p-value) for the null that the coefficient
 attached to the lagged residuals is equal to -0.5.
 
 The function returns a matrix with:
@@ -27,31 +31,40 @@ The function returns a matrix with:
 - the p-value.
 
 The parameters of the function are:
-y	- series for the dependent variable
-X	- list of regressors
-verbose - integer (optional) for printing test output: 0=NO, 1=YES (default)
+y				- series for the dependent variable
+X				- list of regressors
+robustness_type	- integer (optional) selecting the standard error (0=asymptotic,
+					1=HAC type Arellano (default), 2=HC type clustered Beck&amp;Katz)
+verbose 		- integer (optional) for printing test output: 0=NO, 1=YES (default)
 
 The test is discussed in: Wooldridge, J.M. 2002. Econometric Analysis of Cross
 Section and Panel Data. Cambridge, MA: MIT Press, pp.282-283.
 
-Please note that the degrees of freedom for the F-test in the corresponding
-function in Stata (xtserial, see Drukker, D.M. 2003. Testing for serial
-correlation in linear panel-data models, Stata Journal 3(2), 168-177) are
-lower and equal to the number of cross-sectional units minus one, for the
-command uses the option &quot;cluster&quot; in the regression. Please also note that the
-results obtained with the sample db provided with xtserial in Stata are
-different from the results obtained in gretl with the same db by using this
-function simply because the db has got the variable time with breaks.
-Ex.: year 75, 77, 80, 81...
-While Stata looks at the content of the variable and does not treat as
-successive two time periods when they are not contiguous years, gretl does not
-look at the value of the variable set for the time. Therefore the two programs
-return different series for the first-differenced variables.
+Degrees of freedom:
+- for HAC and clustered standard errors: df=N-1 where N refers to the no. of
+cross-sectional units.
+
+When comparing the results of this package with STATA's function &quot;xtseria&quot;
+(see Drukker, D.M. 2003. Testing for serial correlation in linear panel-data
+models, Stata Journal 3(2), 168-177) note that STATA conducts an F-type test
+rather than a t-test.
+
+Please also note that the results obtained with the sample data set provided
+with xtserial in Stata are different from the results obtained in gretl with
+the same data set. This is due to the fact that the data set includes a time
+variable with breaks. Ex.: year 75, 77, 80, 81...
+While Stata checks at the content of the variable and does not treat two time
+periods as successive when they are actually not contiguous, gretl does not
+run such a check. Therefore the two programs return different series for the
+first-differenced variables.
 
 
 Changelog:
 v2.1
-- Add GUI access in the model menu
+- Add GUI access in the model menu for FE and RE panel models
+- Add different methods to compute std. errors
+- Switch from F-test to t-test version
+- Add some santity checks
 - Minor adaptions
 
 V2.0
@@ -72,17 +85,19 @@ GNU General Public License v3.0
   <param name="X" type="list">
 <description>List of regressors</description>
   </param>
-  <param name="robustness_type" type="int" min="0" max="2" default="0" const="true">
-<description>TODO</description>
+  <param name="robustness_type" type="int" min="0" max="2" default="1" const="true">
+<description>Std. Errors</description>
+<labels count="3">
+"Asymptotic" "HAC robust" "Clustered" </labels>
   </param>
-  <param name="verbose" type="bool" default="0" const="true">
-<description>Print details: 0=NO, 1=YES</description>
+  <param name="verbose" type="bool" default="1" const="true">
+<description>Print details</description>
   </param>
  </params>
-<code># Wooldridge test for autocorrelation in panel data
-# Wooldridge (2002) Econometric Analysis of Cross Section and
-# Panel Data, pp.282-283;
-# Giuseppe Vittucci and Artur Tarassow.
+<code>/* Wooldridge test for autocorrelation in panel data
+Wooldridge (2002) Econometric Analysis of Cross Section and
+Panel Data, pp.282-283;
+Giuseppe Vittucci and Artur Tarassow. */
 # Build series
 series d_y = diff(y)
 series_is_null(d_y)
@@ -102,25 +117,16 @@ matrix results = run_wooldridge_t_test(b.coeff, b.stderr, b.df)
 tstat = results[1]
 pval = results[2]
 print_wooldridge_test_results(b.df, tstat, pval, b.coeff, b.stderr, robustness_type, verbose)
-# t-test by hand		# TODO: DROP
-/*
-string str_robustness = b.str_robustness
-ols u u(-1) @str_robustness #--quiet
-restrict
-  b[1] = -0.5
-end restrict
-stop
-*/
 mat = b.coeff~tstat~pval
 cnameset(mat, &quot;ARcoeff Teststat. P-value&quot;)
 return mat
 </code>
 </gretl-function>
 <gretl-function name="gui_wooldridge_test_serial" type="void" pkg-role="gui-main">
-<code>/* Wrapper function for gui menu-entry*/
+<code>/* Wrapper function for gui menu-entry */
 string yname = $model.depvar
-genseries(&quot;@yname&quot;, $model.ylist[1])
-matrix mat = wooldridge_test_serial(@yname, $model.xlist)		# TODO: Add robustness_type option
+series yseries = $model.ylist[1]
+matrix mat = wooldridge_test_serial(yseries, $model.xlist, 1)	# HAC SE
 </code>
 </gretl-function>
 <gretl-function name="run_wooldridge_ols" type="bundle" private="1">
@@ -136,9 +142,9 @@ string str_quiet = get_quiet_string(verbose)
 string str_robustness = get_robustness_string(robustness_type)
 # Set type of VCV correction
 if robustness_type==1				# HAC type Arellano estimator
-  set pcse off					# TODO: Does this overwrite user-settings??
-elif robustness_type==2				# Beck &amp; Katz Panel Corrected Standard Errors (do not take autocorrelation into account)
-  set pcse on						# TODO: Does this overwrite user-settings??
+  set pcse off
+elif robustness_type==2				# Beck &amp; Katz Panel Corrected Standard Errors (HC type)
+  set pcse on
 endif
 ols y L @str_robustness @str_quiet
 string b.xlist_names = varname($xlist)
@@ -172,9 +178,8 @@ return results
   <param name="L" type="list" const="true"/>
  </params>
 <code>/* Helper function for differencing series */
-#list dL = const					# TODO: think about...
 list dL = null
-loop foreach i L --quiet
+loop foreach i L -q
   series d_$i = diff(L.$i)
   list dL += d_$i
 endloop
@@ -190,7 +195,7 @@ return dL
 elif robustness_type==1
   return &quot;With HAC robust Arellano standard errors.&quot;
 elif robustness_type==2
-  return &quot;With Beck &amp; Katz panel corrected standard errors.&quot;
+  return &quot;With Beck &amp; Katz panel corrected HC robust standard errors.&quot;
 endif
 </code>
 </gretl-function>
@@ -209,11 +214,11 @@ if verbose
   matrix mat = coeff ~ stderr
   string parnames = &quot;uhat(-1)&quot;
   modprint mat parnames
-  printf &quot;\nWooldridge test for autocorrelation in panel data.\n&quot;
+  printf &quot;\nWooldridge t-test for autocorrelation in panel data.\n&quot;
   printf &quot;H0: no first-order autocorrelation (rho = -0.5):\n&quot;
   printf &quot;%s\n&quot;, get_stderr_type_string(robustness_type)
-  printf &quot;F(1,%d) = %g\n&quot;, df, tstat
-  printf &quot;Prob &gt; F = %g\n&quot;, pval
+  printf &quot;Test statistic: t(%d) = %g\n&quot;, df, tstat
+  printf &quot;with p-value = P(t(%d) &gt; %g) = %g\n&quot;, df, tstat, pval
 endif
 </code>
 </gretl-function>
@@ -230,7 +235,7 @@ endif
  </params>
 <code>scalar ret = sum_abs_series_values(y)
 if ret==0
-  errmsg_series_is_null(s)
+  errmsg_series_is_null(y)
 endif
 </code>
 </gretl-function>
@@ -285,17 +290,19 @@ endif
 </code>
 </gretl-function>
 <sample-script>
-#include wooldridge_test_serial.gfn
+clear
+include wooldridge_test_serial.gfn --force
+
 open abdata.gdt
-list X = n k
-scalar robustness_type = 1			# optional: 0=asymptotic S.E., 1=Arellano HAC type, 2=Beck &amp; Katz panel (clustered) corrected standard errors
-scalar verbose = 1					# optional
-matrix M = wooldridge_test_serial(ys, X, robustness_type, verbose)
+
+list X = const n k
+scalar robustness_type = 2	# optional: Std. Errors: 0=asymptotic, 1=Arellano HAC type, 2=Beck &amp; Katz panel (clustered) corrected
+matrix M = wooldridge_test_serial(ys, X, robustness_type)
 
 
-#set pcse off						# Arellano HAC type
-#set pcse on						# Beck &amp; Katz HC type
-panel ys const X --robust #--quiet
+# built-in version using HAC robust Arellano type std.
+# errors + intercept in the FC regression
+panel ys X --robust
 modtest --autocorr
 </sample-script>
 </gretl-function-package>

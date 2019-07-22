@@ -1,7 +1,7 @@
 author = Giuseppe Vittucci and Artur Tarassow
 email = giuseppe.vittucci@unimib.it
 version = 2.1
-date = 2019-07-11
+date = 2019-07-23
 description = Wooldridge's test for serial correlation of residuals in panel model
 tags = C23 C52
 min-version = 2016d

@@ -1,13 +1,17 @@
-This package computes the Wooldridge test for serial correlation of residuals
-in panel.
+This package computes Wooldridge's test for 1st-order serial correlation
+of residuals in panels.
 
-The null hypothesis is: no serial correlation.
+The null hypothesis is: no serial correlation of order one.
+
+Since gretl version 2019d, this type of test is shipped natively with gretl.
+However, the gretl version only supports HAC robust Arellano type of
+standard errors.
 
 The function prints:
-- the results of the auxiliary regression for the model in first-differences;
-- the results of the regression of the estimated residuals in the previous
-regression against their lag;
-- the F-test (with the related p-value) for the null that the coefficient
+1) The results of the auxiliary regression for the model in first-differences;
+2) The results of the regression of the estimated residuals in the previous
+regression against its 1st lag;
+3) The t-test (with the related p-value) for the null that the coefficient
 attached to the lagged residuals is equal to -0.5.
 
 The function returns a matrix with:
@@ -16,31 +20,40 @@ The function returns a matrix with:
 - the p-value.
 
 The parameters of the function are:
-y	- series for the dependent variable
-X	- list of regressors
-verbose - integer (optional) for printing test output: 0=NO, 1=YES (default)
+y				- series for the dependent variable
+X				- list of regressors
+robustness_type	- integer (optional) selecting the standard error (0=asymptotic,
+					1=HAC type Arellano (default), 2=HC type clustered Beck&Katz)
+verbose 		- integer (optional) for printing test output: 0=NO, 1=YES (default)
 
 The test is discussed in: Wooldridge, J.M. 2002. Econometric Analysis of Cross
 Section and Panel Data. Cambridge, MA: MIT Press, pp.282-283.
 
-Please note that the degrees of freedom for the F-test in the corresponding
-function in Stata (xtserial, see Drukker, D.M. 2003. Testing for serial
-correlation in linear panel-data models, Stata Journal 3(2), 168-177) are
-lower and equal to the number of cross-sectional units minus one, for the
-command uses the option "cluster" in the regression. Please also note that the
-results obtained with the sample db provided with xtserial in Stata are
-different from the results obtained in gretl with the same db by using this
-function simply because the db has got the variable time with breaks.
-Ex.: year 75, 77, 80, 81...
-While Stata looks at the content of the variable and does not treat as
-successive two time periods when they are not contiguous years, gretl does not
-look at the value of the variable set for the time. Therefore the two programs
-return different series for the first-differenced variables.
+Degrees of freedom:
+- for HAC and clustered standard errors: df=N-1 where N refers to the no. of
+cross-sectional units.
+
+When comparing the results of this package with STATA's function "xtseria"
+(see Drukker, D.M. 2003. Testing for serial correlation in linear panel-data
+models, Stata Journal 3(2), 168-177) note that STATA conducts an F-type test
+rather than a t-test.
+
+Please also note that the results obtained with the sample data set provided
+with xtserial in Stata are different from the results obtained in gretl with
+the same data set. This is due to the fact that the data set includes a time
+variable with breaks. Ex.: year 75, 77, 80, 81...
+While Stata checks at the content of the variable and does not treat two time
+periods as successive when they are actually not contiguous, gretl does not
+run such a check. Therefore the two programs return different series for the
+first-differenced variables.
 
 
 Changelog:
 v2.1
-- Add GUI access in the model menu
+- Add GUI access in the model menu for FE and RE panel models
+- Add different methods to compute std. errors
+- Switch from F-test to t-test version
+- Add some santity checks
 - Minor adaptions
 
 V2.0

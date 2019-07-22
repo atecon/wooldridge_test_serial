@@ -1,13 +1,15 @@
-#include wooldridge_test_serial.gfn
+clear
+include wooldridge_test_serial.gfn --force
+
 open abdata.gdt
-list X = n k
-scalar robustness_type = 1			# optional: 0=asymptotic S.E., 1=Arellano HAC type, 2=Beck & Katz panel (clustered) corrected standard errors
-scalar verbose = 1					# optional
-matrix M = wooldridge_test_serial(ys, X, robustness_type, verbose)
+
+list X = const n k
+scalar robustness_type = 2	# optional: Std. Errors: 0=asymptotic, 1=Arellano HAC type, 2=Beck & Katz panel (clustered) corrected
+matrix M = wooldridge_test_serial(ys, X, robustness_type)
 
 
-#set pcse off						# Arellano HAC type
-#set pcse on						# Beck & Katz HC type
-panel ys const X --robust #--quiet
+# built-in version using HAC robust Arellano type std.
+# errors + intercept in the FC regression
+panel ys X --robust
 modtest --autocorr
 
