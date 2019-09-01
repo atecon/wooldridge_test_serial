@@ -85,7 +85,7 @@ function matrix run_wooldridge_t_test (const scalar coeff, const scalar stderr, 
 
     matrix results = zeros(2,1)
     results[1] = (coeff + 0.5) / stderr
-    results[2] = 2*pvalue(t, df, results[1])
+    results[2] = 2*pvalue(t, df, abs(results[1]))
     rnameset(results, "tstat pvalue")
 
     return results
