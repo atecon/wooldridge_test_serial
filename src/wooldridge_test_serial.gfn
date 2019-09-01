@@ -21,13 +21,13 @@ The function prints:
 1) The results of the auxiliary regression for the model in first-differences;
 2) The results of the regression of the estimated residuals in the previous
 regression against its first lag;
-3) The t-test (with the related p-value) for the null that the coefficient
+3) The two-sided t-test (with the related p-value) for the null that the coefficient
 attached to the lagged residuals is equal to -0.5.
 
 The function returns a matrix with:
 - the point estimate of the AR coefficient;
-- the test statistic;
-- the p-value.
+- the test statistic of the t-test;
+- the p-value of the two-sided t-test.
 
 The parameters of the function are:
 y 		- series for the dependent variable
