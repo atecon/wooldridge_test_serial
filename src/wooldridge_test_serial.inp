@@ -5,29 +5,33 @@ function matrix wooldridge_test_serial (series y "Dependent variable",
     /* Wooldridge test for autocorrelation in panel data
        Wooldridge (2002) Econometric Analysis of Cross Section and
        Panel Data, pp.282-283;
-       Giuseppe Vittucci and Artur Tarassow. */
+       Artur Tarassow and Giuseppe Vittucci Marzetti.*/
 
     # Build series
-    series d_y = diff(y)
-    series_is_null(d_y)
+    series dy = diff(y)
+    series_is_null(dy)
     list dX = get_list_of_differenced_series(X)
 
-    # 1st diff. regression
+    # FD regression
     bundle b = null
-    b = run_wooldridge_ols(d_y, dX, robustness_type, verbose)
+    b = run_wooldridge_ols(dy, dX, robustness_type, verbose)
     series u = b.uhat
     print_first_diff_reg(argname(y), b.xlist_names, b.coeff~b.stderr, robustness_type, verbose)
 
     # Run actual auxiliary regression
-    print_aux_reg(verbose)
+    if verbose
+        printf "\nRegression of residuals of the first-differenced equation on lagged residuals:\n"
+        printf "uhat = rho*uhat(-1) + e\n"
+    endif
     bundle b = null
-    list u_lag = u(-1)
-    b = run_wooldridge_ols(u, u_lag, robustness_type, verbose)
+    list u_1 = u(-1)
+    b = run_wooldridge_ols(u, u_1, robustness_type, verbose)
 
     # Inference
     matrix results = run_wooldridge_t_test(b.coeff, b.stderr, b.df)
     tstat = results[1]
     pval = results[2]
+
     print_wooldridge_test_results(b.df, tstat, pval, b.coeff, b.stderr, robustness_type, verbose)
 
     mat = b.coeff~tstat~pval
@@ -39,7 +43,6 @@ end function
 
 function void gui_wooldridge_test_serial (void)
     /* Wrapper function for gui menu-entry */
-    
     string yname = $model.depvar
     series yseries = $model.ylist[1]
     matrix mat = wooldridge_test_serial(yseries, $model.xlist, 1)	# HAC SE
@@ -51,8 +54,8 @@ function bundle run_wooldridge_ols (const series y, const list L, const int robu
     /* Estimate regression by OLS and retrieve various model information */
 
     bundle b = null
-    string str_quiet = get_quiet_string(verbose)
-    string str_robustness = get_robustness_string(robustness_type)
+    string str_quiet = (verbose == 1) ? "" : "--quiet"
+    string str_robustness = (robustness_type > 0) ? "--robust" : ""
 
     # Set type of VCV correction
     if robustness_type==1				# HAC type Arellano estimator
@@ -76,6 +79,7 @@ function bundle run_wooldridge_ols (const series y, const list L, const int robu
     return b
 end function
 
+
 function matrix run_wooldridge_t_test (const scalar coeff, const scalar stderr, const int df)
     /* Run 2-sided t-test on H0: b=-0.5 */
 
@@ -83,7 +87,7 @@ function matrix run_wooldridge_t_test (const scalar coeff, const scalar stderr, 
     results[1] = (coeff + 0.5) / stderr
     results[2] = pvalue(t, df, results[1])
     rnameset(results, "tstat pvalue")
-    
+
     return results
 end function
 
@@ -93,10 +97,10 @@ function list get_list_of_differenced_series (const list L)
 
     list dL = null
     loop foreach i L -q
-        series d_$i = diff(L.$i)
-        list dL += d_$i
+        series d$i = diff(L.$i)
+        list dL += d$i
     endloop
-    
+
     return dL
 end function
 
@@ -116,7 +120,6 @@ function void print_wooldridge_test_results (const int df, const scalar tstat, c
                                              const matrix coeff, const matrix stderr,
                                              const int robustness_type, const bool verbose)
     /* Helper function for printing test results */
-
     if verbose
         matrix mat = coeff ~ stderr
         string parnames = "uhat(-1)"
@@ -130,34 +133,12 @@ function void print_wooldridge_test_results (const int df, const scalar tstat, c
 end function
 
 
-function scalar sum_abs_series_values (const series y)
-    return sum(abs(y))
-end function
-
 function void series_is_null (const series y)
-    scalar ret = sum_abs_series_values(y)
+    scalar ret = sum(abs(y))
     if ret==0
-        errmsg_series_is_null(y)
+        string vname = argname(y)
+    	funcerr "Error: The first difference of series @vname comprises only zero entries."
     endif
-end function
-
-function void errmsg_series_is_null (const series y)
-    string vname = argname(y)
-    funcerr "Error: The first difference of series @vname comprises only zero entries."
-end function
-
-
-function string get_quiet_string (const bool verbose)
-    string str_quiet = ""
-    
-    return (verbose==1) ? "--quiet" : str_quiet
-end function
-
-
-function string get_robustness_string (const bool robustness_type)
-    string str_robustness = ""
-    
-    return (robustness_type>0) ? "--robust" : str_robustness
 end function
 
 
@@ -169,13 +150,5 @@ function void print_first_diff_reg (const string name_y, const string parnames, 
         printf "\nFirst-Differenced equation (dependent d_%s):\n", name_y
         printf "%s\n", get_stderr_type_string(robustness_type)
         modprint coef_stde parnames
-    endif
-end function
-
-
-function void print_aux_reg (const bool verbose)
-    if verbose
-        printf "\nRegression of residuals of the first-difference equation on lagged residuals:\n"
-        printf "uhat = rho*uhat(-1) + e\n"
     endif
 end function

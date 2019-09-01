@@ -1,16 +1,15 @@
 This package computes Wooldridge's test for 1st-order serial correlation
 of residuals in panels.
 
-The null hypothesis is: no serial correlation of order one.
+The test is discussed in: Wooldridge, J.M. 2002. Econometric Analysis of Cross
+Section and Panel Data. Cambridge, MA: MIT Press, pp.282-283.
 
-Since gretl version 2019d, this type of test is shipped natively with gretl.
-However, the gretl version only supports HAC robust Arellano type of
-standard errors.
+The null hypothesis is: no serial correlation of order one.
 
 The function prints:
 1) The results of the auxiliary regression for the model in first-differences;
 2) The results of the regression of the estimated residuals in the previous
-regression against its 1st lag;
+regression against its first lag;
 3) The t-test (with the related p-value) for the null that the coefficient
 attached to the lagged residuals is equal to -0.5.
 
@@ -20,18 +19,14 @@ The function returns a matrix with:
 - the p-value.
 
 The parameters of the function are:
-y				- series for the dependent variable
-X				- list of regressors
-robustness_type	- integer (optional) selecting the standard error (0=asymptotic,
-					1=HAC type Arellano (default), 2=HC type clustered Beck&Katz)
-verbose 		- integer (optional) for printing test output: 0=NO, 1=YES (default)
+y 		- series for the dependent variable
+X 		- list of regressors
+robustness_type	- integer (optional) selecting the standard error
+(0=asymptotic, 1=HAC type Arellano (default), 2=HC type clustered Beck & Katz)
+verbose		- integer (optional) for printing test output: 0=NO, 1=YES (default)
 
-The test is discussed in: Wooldridge, J.M. 2002. Econometric Analysis of Cross
-Section and Panel Data. Cambridge, MA: MIT Press, pp.282-283.
-
-Degrees of freedom:
-- for HAC and clustered standard errors: df=N-1 where N refers to the no. of
-cross-sectional units.
+Please note that the the degrees of freedom for HAC and clustered standard errors
+are equal to the number of cross-sectional units minus 1.
 
 When comparing the results of this package with STATA's function "xtseria"
 (see Drukker, D.M. 2003. Testing for serial correlation in linear panel-data
@@ -47,6 +42,8 @@ periods as successive when they are actually not contiguous, gretl does not
 run such a check. Therefore the two programs return different series for the
 first-differenced variables.
 
+NB: Since gretl version 2019d, this type of test is shipped natively with gretl.
+However, the gretl version only supports HAC robust Arellano standard errors.
 
 Changelog:
 v2.1
@@ -60,8 +57,7 @@ V2.0
 - Return value is now a matrix instead of a scalar
 
 For any suggestion, bug, etc. write to:
-giuseppe.vittucci@unimib.it or atecon@posteo.de
-
+atecon@posteo.de or giuseppe.vittucci@unimib.it
 
 License:
 GNU General Public License v3.0
