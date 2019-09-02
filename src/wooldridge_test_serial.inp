@@ -10,7 +10,8 @@ function matrix wooldridge_test_serial (series y "Dependent variable",
     # Build series
     series dy = diff(y)
     series_is_null(dy)
-    list dX = get_list_of_differenced_series(X)
+#    list dX = get_list_of_differenced_series(X)
+    list dX = diff(X)
 
     # FD regression
     bundle b = null
@@ -35,7 +36,11 @@ function matrix wooldridge_test_serial (series y "Dependent variable",
     print_wooldridge_test_results(b.df, tstat, pval, b.coeff, b.stderr, robustness_type, verbose)
 
     mat = b.coeff~tstat~pval
+    colnames(mat, "ARcoeff Teststat. P-value")
+    mat
+    stop
     cnameset(mat, "ARcoeff Teststat. P-value")
+    
 
     return mat
 end function
@@ -92,8 +97,9 @@ function matrix run_wooldridge_t_test (const scalar coeff, const scalar stderr, 
 end function
 
 
+/*
 function list get_list_of_differenced_series (const list L)
-    /* Helper function for differencing series */
+#    Helper function for differencing series
 
     list dL = null
     loop foreach i L -q
@@ -103,7 +109,7 @@ function list get_list_of_differenced_series (const list L)
 
     return dL
 end function
-
+*/
 
 function string get_stderr_type_string (const int robustness_type)
     if robustness_type==0
