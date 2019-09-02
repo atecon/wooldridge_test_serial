@@ -97,7 +97,8 @@ Artur Tarassow and Giuseppe Vittucci Marzetti.*/
 # Build series
 series dy = diff(y)
 series_is_null(dy)
-list dX = get_list_of_differenced_series(X)
+#    list dX = get_list_of_differenced_series(X)
+list dX = diff(X)
 # FD regression
 bundle b = null
 b = run_wooldridge_ols(dy, dX, robustness_type, verbose)
@@ -170,19 +171,6 @@ results[1] = (coeff + 0.5) / stderr
 results[2] = 2*pvalue(t, df, abs(results[1]))
 rnameset(results, &quot;tstat pvalue&quot;)
 return results
-</code>
-</gretl-function>
-<gretl-function name="get_list_of_differenced_series" type="list" private="1">
- <params count="1">
-  <param name="L" type="list" const="true"/>
- </params>
-<code>/* Helper function for differencing series */
-list dL = null
-loop foreach i L -q
-  series d$i = diff(L.$i)
-  list dL += d$i
-endloop
-return dL
 </code>
 </gretl-function>
 <gretl-function name="get_stderr_type_string" type="string" private="1">
