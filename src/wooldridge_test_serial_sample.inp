@@ -1,5 +1,5 @@
 clear
-#include wooldridge_test_serial.gfn --force
+include wooldridge_test_serial.gfn --force
 
 open abdata.gdt
 
