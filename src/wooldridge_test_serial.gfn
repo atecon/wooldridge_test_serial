@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gretl-functions>
-<gretl-function-package name="wooldridge_test_serial" needs-panel-data="true" model-requirement="panel" minver="2016d">
+<gretl-function-package name="wooldridge_test_serial" needs-panel-data="true" model-requirement="panel" minver="2018a">
 <author email="giuseppe.vittucci@unimib.it">Giuseppe Vittucci Marzetti and Artur Tarassow</author>
 <version>2.1</version>
-<date>2019-09-01</date>
+<date>2019-09-02</date>
 <description>Wooldridge's test for serial correlation of residuals in panel model</description>
 <tags>C23 C52</tags>
 <label>Autocorrelation-Wooldridge</label>
