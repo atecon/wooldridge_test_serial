@@ -1,0 +1,17 @@
+#include wooldridge_test_serial.gfn
+open /home/at/git/wooldridge_test_serial/data/nlswork.dta --quiet
+setobs idcode year --panel-vars
+
+series age2 = age^2
+series tenure2 = tenure^2
+list X = age age2 ttl_exp tenure tenure2 south
+
+scalar robustness_type = 1			# optional
+scalar verbose = 1					# optional
+matrix M = wooldridge_test_serial(ln_wage, X, robustness_type, verbose)
+
+stop
+# Built-in version
+panel ln_wage const X --quiet
+modtest --autocorr
+

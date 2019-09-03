@@ -1,5 +1,8 @@
-include wooldridge_test_serial.gfn
+clear
+include wooldridge_test_serial.gfn --force
+
 open abdata.gdt
-list X = n k
-matrix M = wooldridge_test_serial(ys,X)
-print M
+
+list X = const n k
+scalar robustness_type = 2	# optional: s.e.: 0=asymptotic, 1=Arellano HAC type, 2=Beck & Katz panel (clustered) corrected
+matrix M = wooldridge_test_serial(ys, X, robustness_type)
