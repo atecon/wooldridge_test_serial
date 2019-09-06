@@ -1,5 +1,6 @@
 # wooldridge_test_serial
 Function for computing Wooldridge's test for 1st order serial correlation of residuals in panel models. The null hypothesis is: no serial correlation of order one.
+Since version 2.1., the user can either access the procedure via **scripting** or using the *post-model* **GUI** entry *Tests -> Autocorrelation-Wooldridge* for panel models.
 
 Reference: Wooldridge, J.M. 2002. Econometric Analysis of Cross
 Section and Panel Data. Cambridge, MA: MIT Press, pp.282-283.
